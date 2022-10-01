@@ -12,3 +12,4 @@ how will employment get effected?
 find out about Socio-Economic issues related to this data.
 Trying and choosing best model type with the most accuracy so that we can predict inflation data with confidence and better prepare for the future.
 Using the best predictors from the choosen dataset for least error in the model.
+Analysis methods that we would compare are lasso regression, elastic net word cloud, vector regression, quantile regression forest, random forest, empirical analysis model.
