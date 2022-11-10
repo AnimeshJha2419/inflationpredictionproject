@@ -30,7 +30,7 @@ Although we haven't uploaded any code for our final project, however we have upl
 
 
 ### Summarize your data
-This dataset, which covers the US macroeconomic variables from May 2002 to May 2022 in month-by-month detail, can be used to analyze how various macroeconomic factors interact with one another.
+This dataset, covers the US macroeconomic variables from May 2002 to May 2022 in month-by-month detail, can be used to analyze how various macroeconomic factors interact with one another.
 data was gathered and sourced from US government sources including FRED, CENSUS, OECD, and Conference Board.
 collected demographic information from the OECD, consumer confidence index from the Conference Board, and economic data from the FRED official website, including income, GDP, various indexes, mortgage, etc. 
 'Median Household Income in the US' column has many missing values and we would like to convert them into null values for using this feature.
@@ -39,8 +39,7 @@ A potential issue we might face is that the amount of data present in the datase
 
 
 ### Describe your initial analysis strategy
-We began with preprocessing our data by tuning parameters and removing the data inconsistencies within the dataset, to select the best accuracy, Residual Sum of Squares, R-Squared, Residual Standard Error, and bias-varience trade-off. 
-Initally we want to apply few algorithms and select the best subset of features that would provide best accuracy
+We began with preprocessing our data by tuning parameters and removing the data inconsistencies within the dataset. To select the best accuracy, Residual Sum of Squares, R-Squared, Residual Standard Error, and bias-varience trade-off in each algorithm we need to select the factors most affecting the prediction value. Initally we plan to apply few algorithms and select the best subset of features that would provide best prediction. After the best subset has been selected we would compare the values of all the algorithms and select the algorithm which best predicts future inflation. 
 
 
 ### What you have tried so far?
@@ -54,7 +53,7 @@ The forward selection has provide us with a few features that seem to be the mos
 ### What you plan to do next...
 _Please define explicit goals for each of the remaining weeks (before the presentation is due)_
 
-- Week 1: Find more data for the dataset and apply the data preprocessing step on it again. 
+- Week 1: Find more data for the dataset, apply the data preprocessing and forward selection steps on it again. 
 - Week 2: Apply each of the algorithms and find the best prediction by comparing accuracy, Residual Sum of Squares, R-Squared, Residual Standard Error, and bias-varience trade-off.
 - Week 3: Apply final analysis and provide the best algorithm for prediction. Creating the documentation and powerpoint. 
 
