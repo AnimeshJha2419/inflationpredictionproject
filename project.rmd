@@ -1,5 +1,5 @@
 ```{r}
-dataset <- read.csv("C:/Users/91801/Animesh/Downloads/Inflation.csv")
+dataset <- read.csv("Data.csv")
 dataset
 ```
 
@@ -17,4 +17,9 @@ which(colSums(is.na.data.frame(dataset))>0)
 names(which(colSums(is.na.data.frame(dataset))>0))
 ```
 
+```{r}
+
+
+
+```
 

@@ -1,0 +1,45 @@
+---
+title: "Part 1: Read, Explore, and Clean Data"
+author: "Sarthak Chauhan"
+date: "2022-12-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#loading the required libraries 
+library(dplyr)
+library(skimr)
+library(DataExplorer)
+library(VIM)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+#load dataset
+dataset <- read.csv("Data.csv")
+
+head(dataset)
+#check dimensions of data set
+dim(dataset)
+# Get the structure of data set(We could have also used glimpse() here but structure function is easier to read)
+str(dataset)
+```
+```{r}
+#summary of data 
+summary(dataset)
+#numerical characteristics from the summary, along with missing values, additional quantile data, and an inline histogram for each variable
+skimmed_dataset = skim(dataset)
+skimmed_dataset
+
+#DataExplorer::create_report(dataset)
+```
+
