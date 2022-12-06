@@ -1,0 +1,261 @@
+---
+title: "Inflation Prediction"
+author: "Sarthak Chauhan, Animesh Kumar Jha, Abhiraj Rana"
+date: "2022-12-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#loading the required libraries 
+library(dplyr)
+library(skimr)
+library(DataExplorer)
+library(VIM)
+library(ggplot2)
+library(corrplot)
+library(leaps)
+library(caret)
+library(glmnet)
+library(randomForest)
+library(xgboost)
+library(DiagrammeR)
+library(Metrics)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+
+>>**"Part 1: Read, Explore, and Clean Data"**
+
+```{r}
+#load dataset
+dataset <- read.csv("Data.csv")
+
+head(dataset)
+#check dimensions of data set
+dim(dataset)
+# Get the structure of data set(We could have also used glimpse() here but structure function is easier to read)
+str(dataset)
+```
+```{r}
+#summary of data 
+summary(dataset)
+#numerical characteristics from the summary, along with missing values, additional quantile data, and an inline histogram for each variable
+skimmed_dataset = skim(dataset)
+skimmed_dataset
+
+#DataExplorer::create_report(dataset)
+```
+
+>>**'Part 2: manipulate, wrangle, visualise data'**
+
+
+```{r}
+#Time series plot of inflation. 
+dataset$DATE <- as.Date(dataset$DATE, format="%d-%m-%Y")
+timeplot <- ggplot(dataset, aes(x=DATE, y=INFLATION...)) +
+       geom_line()
+timeplot
+temp <- data.frame(
+                 month = as.numeric(format(dataset$DATE, format = "%m")),
+                 year = as.numeric(format(dataset$DATE, format = "%Y")))
+#Splitting the char variable date into numerical variables month and year and creading a new dataset
+#Removing Date variable from the dataset:
+processedDataset <- dataset[-c(1)]
+processedDataset <- cbind(temp,processedDataset)
+
+```
+
+
+
+```{r}
+#setting seed value for reproducibility 
+set.seed(1902)
+#splitting data set into test and train set (70:30 split)
+subset <- sample(nrow(processedDataset), nrow(processedDataset) * 0.7,replace=FALSE)
+train <- processedDataset[subset, ]
+nrow(train) / nrow(processedDataset)
+test <- processedDataset[-subset, ]
+nrow(test) / nrow(processedDataset)
+dim(train)
+dim(test)
+```
+
+```{r}
+#filling missing values in the training and test set(imputation using KNN)
+train <-kNN(train)
+test <-kNN(test)
+# additional variables are created after performing knn imputation, Step to remove these extra variables:
+train = subset(train, select = c(1:(ncol(train)/2)))
+test = subset(test, select = c(1:(ncol(test)/2)))
+
+skim(train)
+skim(test)
+
+```
+
+```{r}
+#Visualisation of Data:
+pairs(processedDataset)
+boxplot(processedDataset)
+M = cor(rbind(test,train))
+corrplot(M, method = 'number',tl.cex=0.5)
+```
+
+
+```{r}
+#Standardizing/Scaling data 
+train_unscaled <- train
+train<-scale(train, center = TRUE, scale = TRUE)
+train<-as.data.frame(train)
+test_unscaled<-test
+test<-scale(test, center = TRUE, scale = TRUE)
+test<-as.data.frame(test)
+```
+
+>>**'Part 3: Running Models'**
+
+```{r}
+#Using forward selection to identify significant parameters
+set.seed(1902)
+intercept_only <- lm(INFLATION... ~ 1, data=train)
+all <- lm(INFLATION... ~ ., data=train)
+forward <- step(intercept_only, direction='forward', scope=formula(all), trace=0)
+forward$anova
+forward$coefficients
+# From the above data we see that the following predictors are the most statistically significant
+
+
+RSQUARE = function(y_actual,y_predict){
+  cor(y_actual,y_predict)^2
+}
+
+```
+
+```{r}
+#Linear Regression Model
+set.seed(1902)
+linearModel = lm(INFLATION... ~  PPI.CONST.MAT. + CPIALLITEMS + MORTGAGE.INT..MONTHLY.AVG... + CORP..BOND.YIELD... + MED.HOUSEHOLD.INCOME	+ CSUSHPISA + MONTHLY.HOME.SUPPLY	+ X..SHARE.OF.WORKING.POPULATION, data = train) 
+summary(linearModel)
+linearPred <- predict(linearModel, test)
+lm_rmse <- rmse(test$INFLATION..., linearPred) #0.5718129
+AIC(linearModel)
+BIC(linearModel)
+```
+
+```{r}
+#Ridge Regression Model
+
+set.seed(1902)
+#define response variable
+y <- train$INFLATION...
+#define matrix of predictor variables
+x <- data.matrix(train[, c('PPI.CONST.MAT.','CPIALLITEMS', 'MORTGAGE.INT..MONTHLY.AVG...', 'CORP..BOND.YIELD...', 'MED.HOUSEHOLD.INCOME', 'CSUSHPISA', 'MONTHLY.HOME.SUPPLY', 'X..SHARE.OF.WORKING.POPULATION')])
+xtest <- data.matrix(test[, c('PPI.CONST.MAT.','CPIALLITEMS', 'MORTGAGE.INT..MONTHLY.AVG...', 'CORP..BOND.YIELD...', 'MED.HOUSEHOLD.INCOME', 'CSUSHPISA', 'MONTHLY.HOME.SUPPLY', 'X..SHARE.OF.WORKING.POPULATION')])
+ytest <- test$INFLATION...
+#perform k-fold cross-validation to find optimal lambda value
+crossModelRidge <- cv.glmnet(x, y, alpha = 0)
+lambdas <- 10^seq(2, -3, by = -.1)
+ridgeRegression <- glmnet(x, y, alpha = 0,family = 'gaussian', lambda = lambdas)
+summary(ridgeRegression)
+#find optimal lambda value that minimizes test MSE
+bestLambda <- crossModelRidge$lambda.min
+bestLambda
+#produce plot of test MSE by lambda value
+plot(crossModelRidge) 
+#find coefficients of best model
+bestModel <- glmnet(x, y, alpha = 0, lambda = bestLambda)
+coef(bestModel)
+plot(ridgeRegression, xvar = "lambda")
+#use fitted best model to make predictions
+yPredicted <- predict(ridgeRegression, s = bestLambda, newx = xtest)
+ridge_rmse <-rmse(ytest,yPredicted) #0.4914431
+```
+
+
+```{r}
+#Lasso Regression Model
+set.seed(1902)
+#perform k-fold cross-validation to find optimal lambda value
+crossModel2 <- cv.glmnet(x, y, alpha = 1)
+
+#find optimal lambda value that minimizes test MSE
+bestLambda2 <- crossModel2$lambda.min
+bestLambda2
+#produce plot of test MSE by lambda value
+plot(crossModel2) 
+#find coefficients of best model
+bestModel2 <- glmnet(x, y, alpha = 1, lambda = bestLambda2)
+coef(bestModel2)
+#use fitted best model to make predictions
+yPredicted2 <- predict(bestModel2, s = bestLambda2, newx = xtest)
+lasso_rmse <-rmse(ytest,yPredicted2) #0.5697695
+```
+
+```{r}
+#Random Forest Model
+set.seed(1902)
+ randomForestModel <- randomForest(INFLATION... ~  PPI.CONST.MAT. + CPIALLITEMS + MORTGAGE.INT..MONTHLY.AVG... + CORP..BOND.YIELD... + MED.HOUSEHOLD.INCOME	+ CSUSHPISA + MONTHLY.HOME.SUPPLY	+ X..SHARE.OF.WORKING.POPULATION, data = train, mtry = 3, importance = TRUE, na.action = na.omit)
+randomForestModel
+plot(randomForestModel)
+summary(randomForestModel)
+rfPredictions = predict(randomForestModel, test)
+mean((rfPredictions - test$INFLATION...)^2)
+rf_rmse<-rmse(test$INFLATION..., rfPredictions) #0.6759944
+
+
+```
+```{r}
+#XGBOOST MODEL
+set.seed(1902)
+train_x = data.matrix(train[, -7])
+train_y = train[,7]
+test_x = data.matrix(test[, -7])
+test_y = test[, 7]
+xgb_train = xgb.DMatrix(data = train_x, label = train_y)
+xgb_test = xgb.DMatrix(data = test_x, label = test_y)
+watchlist = list(train=xgb_train, test=xgb_test)
+model = xgb.train(data = xgb_train, max.depth = 3, watchlist=watchlist, nrounds = 70) #From the output we can see that the minimum testing RMSE is achieved at 26 rounds.
+final = xgboost(data = xgb_train, max.depth = 3, nrounds = 26, verbose = 0) #we’ll define our final XGBoost model to use 26 rounds
+xgb.plot.tree(model = final, trees = 1:3)
+pred_y = predict(final, test_x)
+mean((test_y - pred_y)^2) #mse
+MAE(test_y, pred_y) #mae
+xg_rmse<-rmse(test_y, pred_y) #rmse 0.5573487
+
+```
+
+
+```{r}
+#RMSE Comparison for the models.
+x= c('lm','ridge','lasso','rf','xgboost')
+y= c(lm_rmse,ridge_rmse,lasso_rmse,rf_rmse,xg_rmse)
+sample_data <- data.frame(name = c('lm','ridge','lasso','rf','xgboost') ,
+                          value = c(lm_rmse,ridge_rmse,lasso_rmse,rf_rmse,xg_rmse))
+plot<-ggplot(sample_data,
+             aes(name,value)) +
+geom_bar(stat = "identity") + xlab("ML Model")+ylab("RMSE Value")
+plot 
+#The plot shows that Ridge regression works best for the following dataset to predict inflation.
+```
+
+
+```{r}
+#Comparison of actual test values vs values predicted using Ridge Regression Model.
+df1 = data.frame(Value_Type =rep (c("Actual"),length(test$INFLATION...)),inflation = test$INFLATION...,year=test_unscaled$year)
+df2 = data.frame(Value_Type =rep (c("Predicted"),length(yPredicted)),inflation = yPredicted,year=test_unscaled$year)
+df2<- rename(df2,inflation=s1)
+final_df = union_all(df1,df2)
+plt <- ggplot(data=final_df, aes(x=year, y=inflation, color=Value_Type))+
+       geom_line()+
+       ggtitle("Inflation Prediction")
+plt
+```
