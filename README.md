@@ -6,7 +6,7 @@
 
 
 ## What the project does?
-### The project is a machine learning model that is used to predict inflation data. Machine Learning algorithms linear regression, Lasso Regression, Random Forest, XGBoost, and Ridge Regression are compared to find the most optimal algorithm providing accrate inflation rates and patterns.
+### The project is a machine learning model that is used to predict inflation data. Machine Learning algorithms linear regression, Lasso Regression, Random Forest, XGBoost, and Ridge Regression are compared to find the most optimal algorithm providing accurate inflation rates and patterns.
 
 ## Why the project is useful?
 ### The ability to predict future inflation can provide the opportunity to better prepare financially. The use of machine learning to optimally predict the value can help trust the prediction of the model.
