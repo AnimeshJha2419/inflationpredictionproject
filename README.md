@@ -1,11 +1,8 @@
-# Final projects (Fall 2022)
-### ISTA 421/ INFO 521
-------
 # Project Overview
 
 
 
-## What the project does?
+## What does the project do?
 ### The project is a machine learning model that is used to predict inflation data. Machine Learning algorithms linear regression, Lasso Regression, Random Forest, XGBoost, and Ridge Regression are compared to find the most optimal algorithm providing accurate inflation rates and patterns.
 
 ## Why the project is useful?
